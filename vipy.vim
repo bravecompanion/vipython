@@ -1,20 +1,19 @@
-" Vim comments start with a double quote.
-" Function definition is VimL. We can mix VimL and Python in
-" function definition.
 function! Send2IPython() range " need the 'range' here to specify that the function is to be executed on a visually-selected range
 
-" We start the python code like the next line.
-
 python3 << endPython
+# TODO feature list:
+# * exception handling (ImportError at least)
+# * logging (add config var for logging)
+# * ability to connect to existing kernel
+# * option to use non-jupyter-qtconsole
+
 import vim
 
 from jupyter_client import BlockingKernelClient
 from os.path import join
 
-# TODO: move these into a module & import
 V_KERNELFILE = "g:vipython_kernel_file"
-FMT = "%m%d%H%M%S" # Format for creating localtime()-based string
-KERNELDIR = "C:/Users/kgeohaga/AppData/Roaming/jupyter/runtime" # TODO: make a vimrc variable
+V_KERNELDIR  = "g:vipython_kernel_dir"
 
 def get_selection():
     buf = vim.current.buffer
@@ -28,10 +27,6 @@ def get_selection():
     else:
         lines[0] = lines[0][col_beg:col_end + 1]
 
-    with open('lines.txt', 'w') as f:
-        for line in lines:
-            f.write(line + '\n')
-
     return "\n".join(lines)
 
 def connect_and_send():
@@ -42,7 +37,7 @@ def connect_and_send():
     See ipython kernel client documentation here: http://jupyter-client.readthedocs.io/en/latest/api/client.html
     """
     kc = BlockingKernelClient()
-    kc.load_connection_file(join(KERNELDIR, vim.eval("{}".format(V_KERNELFILE))))
+    kc.load_connection_file(join(vim.eval("{}".format(V_KERNELDIR)), vim.eval("{}".format(V_KERNELFILE))))
     kc.start_channels()
     kc.execute(get_selection())
 
@@ -58,14 +53,11 @@ import vim
 import time
 import subprocess
 
-# TODO: move these into a module & import
 V_KERNELFILE = "g:vipython_kernel_file"
 FMT = "%m%d%H%M%S" # Format for creating localtime()-based string
-KERNELDIR = "C:/Users/kgeohaga/AppData/Roaming/jupyter/runtime"
 
 kernelfile = "kernel-{}.json".format(time.strftime(FMT))
-subprocess.Popen("jupyter-qtconsole.exe -f {}".format(kernelfile), shell=True)
-#subprocess.Popen("python C:/ProgramData/Anaconda3/Scripts/jupyter-qtconsole-script.py", shell=True)
+subprocess.Popen("jupyter-qtconsole.exe -f {}".format(kernelfile), shell=True) # TODO: check PATH for exe first
 vim.command('silent let {} = "{}"'.format(V_KERNELFILE, kernelfile))
 
 endPython
